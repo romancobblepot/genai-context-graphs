@@ -17,6 +17,7 @@ settings = MemorySettings(
         uri=os.environ["NEO4J_URI"],
         username=os.environ["NEO4J_USERNAME"],
         password=os.environ["NEO4J_PASSWORD"],
+        database=os.environ.get("NEO4J_DATABASE", "neo4j")
     ),
     # The extraction pipeline runs spaCy and GLiNER before falling back to the
     # language model. Those two need extra packages (and a GPU-sized download),
@@ -30,12 +31,13 @@ SESSION_ID = "graphacademy"
 
 
 async def main():
-    # TODO 1: Open a MemoryClient using `async with`
-    #
-    # TODO 2: Store one message with memory.short_term.add_message(), passing
-    #         SESSION_ID, the role "user", and any content you like.
-    #         Print the id of the message it returns.
-    pass
+    async with MemoryClient(settings) as memory:
+        message=await memory.short_term.add_message(
+            session_id=SESSION_ID,
+            role='user',
+            content="My name is Adnan Iqbal Kantroo"
+        )
 
+        print(message.id)
 
 asyncio.run(main())

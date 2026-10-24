@@ -17,6 +17,7 @@ settings = MemorySettings(
         uri=os.environ["NEO4J_URI"],
         username=os.environ["NEO4J_USERNAME"],
         password=os.environ["NEO4J_PASSWORD"],
+        database=os.environ["NEO4J_DATABASE"]
     ),
     # The extraction pipeline runs spaCy and GLiNER before falling back to the
     # language model. Those two need extra packages (and a GPU-sized download),
@@ -34,18 +35,10 @@ MESSAGE = "I am Alex Mercer and I work at Ridgeline Labs."
 
 async def main():
     async with MemoryClient(settings) as memory:
-        # TODO 1: Store MESSAGE with memory.short_term.add_message().
-        #         Leave extraction enabled - it is on by default, so do not pass
-        #         extract_entities=False.
-
-        # TODO 2: Record a preference with memory.long_term.add_preference(),
-        #         for example category "communication" and preference
-        #         "Prefers concise answers".
-
-        # TODO 3: Search long-term memory with
-        #         memory.long_term.search_entities(query="Alex") and print the
-        #         name and entity_type of each result.
-        pass
-
-
+        conversation=await memory.short_term.add_message(session_id=SESSION_ID,role="user",content=MESSAGE)
+        await memory.long_term.add_preference(category="communication",preference="Prefers concise answers")
+        person, _ = await memory.long_term.add_entity(name="Alex", entity_type="PERSON")
+        entities=await memory.long_term.search_entities(query="Alex",threshold=0.3)
+        for entity in entities:
+            print(entity.name)
 asyncio.run(main())

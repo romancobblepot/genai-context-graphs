@@ -17,6 +17,7 @@ settings = MemorySettings(
         uri=os.environ["NEO4J_URI"],
         username=os.environ["NEO4J_USERNAME"],
         password=os.environ["NEO4J_PASSWORD"],
+        database=os.environ["NEO4J_DATABASE"]
     ),
     # The extraction pipeline runs spaCy and GLiNER before falling back to the
     # language model. Those two need extra packages (and a GPU-sized download),
@@ -36,14 +37,13 @@ EXCHANGE = [
 
 async def main():
     async with MemoryClient(settings) as memory:
-        # TODO 1: Store each (role, content) pair in EXCHANGE, in order, with
-        #         memory.short_term.add_message(). Await each call before the
-        #         next so the library can chain them.
-
-        # TODO 2: Read the conversation back with
-        #         memory.short_term.get_conversation() and print each message
-        #         as "role: content".
-        pass
-
-
+        for role,content in EXCHANGE:
+            await memory.short_term.add_message(
+                session_id=SESSION_ID,
+                role=role,
+                content=content
+            )
+        conversation=await memory.short_term.get_conversation(SESSION_ID)
+        for message in conversation.messages:
+            print(message.role,message.content)
 asyncio.run(main())

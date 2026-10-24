@@ -24,6 +24,7 @@ settings = MemorySettings(
         uri=os.environ["NEO4J_URI"],
         username=os.environ["NEO4J_USERNAME"],
         password=os.environ["NEO4J_PASSWORD"],
+        database=os.environ["NEO4J_DATABASE"]
     ),
     # The extraction pipeline runs spaCy and GLiNER before falling back to the
     # language model. Those two need extra packages (and a GPU-sized download),
@@ -50,17 +51,19 @@ PROMPTS = [
 
 
 async def main():
-    # TODO 1: Open a MemoryClient using `async with`
+    async with MemoryClient(settings) as memory:
+        tools=create_memory_tools(memory)
+        agent=Agent(
+            model=model,
+            tools=tools
+        )
 
-    # TODO 2: Build the memory tools with create_memory_tools(memory) and pass
-    #         them to Agent(model, tools=...)
-
-    # TODO 3: For each prompt in PROMPTS, await agent.run(prompt), print
-    #         result.output, then call:
-    #           await record_agent_trace(
-    #               memory.reasoning, SESSION_ID, result, task=prompt
-    #           )
-    pass
+        for prompt in PROMPTS:
+            result=await agent.run(prompt)
+            print(result.output)
+            await record_agent_trace(
+                memory.reasoning,session_id=SESSION_ID,result=result,task=prompt
+            )
 
 
 asyncio.run(main())
